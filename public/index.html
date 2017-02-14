@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <title>Evolving With Angular JS</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/main.js"></script>
+    <style>
+        header{
+            position: absolute;
+            z-index: 99999;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+        .mapa{
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            background-color: rgb(229, 227, 223);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body ng-controller="MainController">
+<header>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#" ng-bind="name">
+                </a>
+            </div>
+        </div>
+    </nav>
+</header>
+<section class="container">
+<div ui-alert></div>
+<div class="acordeon">
+          <div class="w-clearfix icon-cep-geral">
+            <div class="icon-cep">
+            </div>
+              <div class="txt-busca-cep">Busca por CEP</div>
+            </div>
+            <div class="w-clearfix busca-drop-geral">
+              <div class="w-form form-wrapper-cep">
+<!--                <form id="email-form" name="email-form" data-name="Email Form" class="form-cep">
+-->                  <input id="field" type="text" placeholder="00000-000" name="field" required class="w-input input-cep">
+<!--                </form>
+-->              </div><a href="#" class="w-button lupa-search" id="lupa-search">.</a>
+            </div>
+          </div>
+          
+           <div class="acordeon">
+            <div class="w-clearfix icon-cep-geral" id="buscaPorCidade">
+              <div class="icon-city"></div>
+              <div class="txt-busca-cep">Busca por Cidade</div>
+            </div>
+            <div class="w-clearfix busca-drop-geral">
+              <div class="cidade-drop">
+                <div class="w-form form-wrap">
+                  <div id="email-form-2" name="email-form-2" data-name="Email Form 2" class="form-cidade">
+                    <select id="field-2" name="field-2" class="w-select select-cidade" onchange="carregaBairro(this.value)">
+                      <option value="">Select one...</option>
+                      <option value="First">First Choice</option>
+                      <option value="Second">Second Choice</option>
+                      <option value="Third">Third Choice</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="w-clearfix search-bairro-geral">
+                <div class="icon-bairro"></div>
+                <div class="bairro-drop">
+                  <div class="w-form">
+                    <div id="email-form-3" name="email-form-3" data-name="Email Form 3">
+                      <label for="field-5" class="txt-busca-bairro">Bairro:</label>
+                      <select id="field-5" name="field-5" data-name="Field 5" class="w-select select-bairro" onchange="carregaMapa(this.value)">
+                        <option value="">Select one...</option>
+                        <option value="First">First Choice</option>
+                        <option value="Second">Second Choice</option>
+                        <option value="Third">Third Choice</option>
+                      </select>
+                    </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        
+
+<div class="w-clearfix resultados-geral" style="height:260px; overflow: hidden !important" id="resultados-geral"></div>
+
+<div class="mapa" id="map"></div>
+			
+
+    
+</section>
+<script src="https://code.jquery.com/jquery-3.1.0.js" integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk=" crossorigin="anonymous"></script>
+<script async defer="defer" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBORUcQfKNMyV3LluJ-yq0Qw8Whvp-H7Qo">
+        </script>
+<script>
+var markerS = [];
+var map;
+var pinsMap;
+var lojas1 = [];
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function () {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+
+        lojas1 = JSON.parse(xhttp.responseText);
+        //beaches = pinsMap;
+        //console.log(lojas1);
+
+
+    }
+};
+xhttp.open("GET", "js/lojas.json", true);
+xhttp.send();
+
+
+var arrayCorrente = [];
+var pinsMap;
+var beaches = [];
+var ContainerLojas = document.getElementById("resultados-geral");
+var gmarkers1 = [];
+var ContainerLojasArray = [];
+var bairros = [];
+var bairrosUnicos = [];
+//ler array = teste[0].points[0].cep
+
+
+function initMap() {
+
+    posicao = {
+        lat: -23.55052,
+        lng: -46.632309
+    };
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: posicao,
+        zoom: 11
+    });
+
+    var criarMarker = function () {
+
+        beaches = lojas1;
+
+        console.log(beaches);
+        //alert('sdd');
+
+
+
+        //            for(beachesArray in beaches){
+        beaches.forEach(function (item) {
+
+
+            var estado = item.cidade;
+            //console.log(estado);
+
+
+            item.points.forEach(function (item, estado) {
+
+
+                if (item.IdTipoLoja == 1) {
+
+                    var titulo = item.title;
+                    //console.log(item.title)  ;  
+                    //var quantidadeLoja = beachesArray[i].points.length;
+                    var myLatLng = {
+                        lat: parseFloat(item.lat),
+                        lng: parseFloat(item.lon)
+                    };
+                    var est = estado;
+                    var bairro = item.bairro;
+                    var loja = "Swift " + item.title;
+                    var endereco = item.endereco + " Numero " + item.numero + " Bairro " + item.bairro;
+                    var cidade = titulo;
+                    var cep = item.cep;
+                    var icon = item.icon;
+                    var hr = item.horario;
+                    var estacionamento = item.estacionamento;
+                    var estacionamentoTXT = "Estacionamento Grátis";
+                    //var tel = beaches[i][4];
+
+                    //console.log(endereco);  
+                    //console.log(myLatLng);
+                    //console.log(loja);
+                    //console.log(endereco);
+                    //console.log(cidade);
+                    //console.log(cep);
+                    //var teste1 = "<h4>"+ item.title +"</h4>"; 
+                    //ContainerLojas.appendChild(item.title);
+                    if (estacionamento == 1) {
+
+                        var lojasTodas = '<div onclick="vaiAteLoja(&quot;' + endereco + '&quot;);" class="box-branco-geral">' +
+                            '<div class="box-branco">' +
+                            '<div class="w-clearfix loja-geral-endereco">' +
+                            '<div class="icon-loja-endereco"><img src="assets/images/icon-loja-onde-comprar-new.png"> </div>' +
+
+                            '<div class="txt-endereco-geral">' +
+                            '<div class="txt-nome-loja">' + loja + '</div>' +
+                            '<div class="txt-local">' + titulo + '</div>' +
+                            '<div class="txt-endereco">' + endereco + '</div></div></div>' +
+
+                            '<div class="w-clearfix estaciona-geral">' +
+                            '<div class="icon-estaciona"><img src="assets/images/icon-estaciona-onde-comprar-new.png"></div>' +
+                            '<div class="txt-estaciona">' + estacionamentoTXT + '</div></div>' +
+                            '<div class="w-clearfix horario-funciona-geral">' +
+                            '<div class="icon-horario"><img src="assets/images/icon-relogio-onde-comprar-new.png"></div>' +
+                            ' <div class="txt-horario-geral">' +
+                            '<div class="txt-horario-funciona"><span class="bold-horario">' + hr + '</div>' +
+                            //'<div class="txt-horario-funciona"><span class="bold-horario">Domingo e Feriado</span> das 08h às 14h</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>';
+                    } else {
+
+                        lojasTodas = '<div onclick="vaiAteLoja(&quot;' + endereco + '&quot;);" class="box-branco-geral">' +
+                        '<div class="box-branco">' +
+                        '<div class="w-clearfix loja-geral-endereco">' +
+                        '<div class="icon-loja-endereco"><img src="assets/images/icon-loja-onde-comprar-new.png"> </div>' +
+
+                        '<div class="txt-endereco-geral">' +
+                        '<div class="txt-nome-loja">' + loja + '</div>' +
+                        '<div class="txt-local">' + titulo + '</div>' +
+                        '<div class="txt-endereco">' + endereco + '</div></div></div>' +
+
+                        '<div class="w-clearfix estaciona-geral">' +
+                        '<div class="icon-estaciona"><img src="assets/images/icon-estaciona-onde-comprar-new.png"></div>' +
+                        '<div class="txt-estaciona"></div></div>' +
+                        '<div class="w-clearfix horario-funciona-geral">' +
+                        '<div class="icon-horario"><img src="assets/images/icon-relogio-onde-comprar-new.png"></div>' +
+                        ' <div class="txt-horario-geral">' +
+                        '<div class="txt-horario-funciona"><span class="bold-horario">' + hr + '</div>' +
+                        //'<div class="txt-horario-funciona"><span class="bold-horario">Domingo e Feriado</span> das 08h às 14h</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+
+                    }
+
+                    $("#resultados-geral").append(lojasTodas);
+
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        position: myLatLng,
+                        cep: item.cep,
+                        cidade: cidade,
+                        bairro: bairro,
+                        horasFun: hr,
+                        est: estacionamento,
+                        endereco: endereco,
+                        lon: parseFloat(item.lon),
+                        lat: parseFloat(item.lat),
+                        category: "loja",
+                        animation: toggleBounce,
+                        draggable: false,
+                        visible: true,
+                        title: loja
+                    });
+
+                    marker.addListener('click', toggleBounce);
+
+                    var content = '<h6>' + item.title
+
+                        + '<h6>';
+
+                    var infowindow = new google.maps.InfoWindow()
+
+                    google.maps.event.addListener(marker, 'click', (function (marker, content, infowindow) {
+                        return function () {
+                             infowindow.setContent(content);
+                             infowindow.open(map, marker);
+                        };
+                    })(marker, content, infowindow));
+
+                    function toggleBounce() {
+                        if (marker.getAnimation() !== null) {
+                            marker.setAnimation(null);
+                        } else {
+                        }
+                    }
+
+                    ContainerLojasArray.push(lojasTodas);
+                    gmarkers1.push(marker);
+
+
+
+
+                    // }
+
+                }
+
+            })
+        })
+
+    }
+    criarMarker();
+
+}
+
+var vaiAteLoja = function (endLoja) {
+
+    geocoder = new google.maps.Geocoder();
+    geocoder.geocode({
+        'address': endLoja + ', Brasil',
+        'region': 'BR'
+    }, function (results, status) {
+
+        if (status == google.maps.GeocoderStatus.OK) {
+
+            var latitude = results[0].geometry.location.lat();
+            var longitude = results[0].geometry.location.lng();
+            var myLatLng1 = {
+                lat: latitude,
+                lng: longitude
+            };
+
+            map.setCenter({
+                lat: latitude,
+                lng: longitude
+            });
+            map.setZoom(14);
+
+        }
+
+    });
+
+
+}
+
+var vaiAteLoja2 = function (lat, lon) {
+
+    console.log(lat)
+    console.log(lon)
+
+    map.setCenter({
+        lat: lat,
+        lng: lon
+    });
+    map.setZoom(14);
+
+}
+
+var buscaCep = function () {
+
+
+    ContainerLojas.innerHTML = "";
+    var LojasOrder = [];
+    var qualCidade = document.getElementById("field").value;
+    var vcEstaAqui = [];
+
+    geocoder = new google.maps.Geocoder();
+
+    geocoder.geocode({
+        'address': qualCidade + ', Brasil',
+
+    }, function (results, status) {
+
+        if (status == google.maps.GeocoderStatus.OK) {
+
+            $('.hidden').css('height', 'auto')
+            document.body.scrollTop = 1200
+
+            qualCidade = results[0].address_components[2].long_name;
+            //console.log(qualCidade);
+            //console.log(results
+            //);
+            var latitude2 = results[0].geometry.location.lat();
+            var longitude2 = results[0].geometry.location.lng();
+
+            var myLatLng2 = {
+                lat: latitude2,
+                lng: longitude2
+            };
+
+
+            map.setCenter({
+                lat: latitude2,
+                lng: longitude2
+            });
+            map.setZoom(11);
+
+
+
+            gmarkers1.forEach(function (item) {
+
+                var resultDistancia = 6371 * Math.acos(Math.cos(Math.PI * (90 - item.lat) / 180) * Math.cos((90 - latitude2) * Math.PI / 180) + Math.sin((90 - item.lat) * Math.PI / 180) * Math.sin((90 - latitude2) * Math.PI / 180) * Math.cos((longitude2 - item.lon) * Math.PI / 180));
+                LojasOrder.push({ lojaProxima: resultDistancia, marker: item })
+
+
+            });
+
+
+
+            LojasOrder.sort(function (a, b) {
+                return a.lojaProxima - b.lojaProxima;
+            });
+
+            var lojasSelecionadas = [];
+            console.log(lojasSelecionadas);
+
+            for (var i = 0 ; i < 3; i++) {
+                //console.log(LojasOrder)  
+                lojasSelecionadas.push(LojasOrder[i].marker.cep);
+
+                if (LojasOrder[i].marker.est > 2) {
+                    //console.log(LojasOrder);
+
+                    var lojasTodasOrdenadas = '<div onclick="vaiAteLoja2(' + LojasOrder[i].marker.lat + ',' + LojasOrder[i].marker.lon + ');" class="box-branco-geral">' +
+                                            '<div class="box-branco">' +
+                                            '<div class="w-clearfix loja-geral-endereco">' +
+                                            '<div class="icon-loja-endereco"><img src="assets/images/icon-loja-onde-comprar-new.png"> </div>' +
+
+                                            '<div class="txt-endereco-geral">' +
+                                            '<div class="txt-nome-loja">' + LojasOrder[i].marker.title + '</div>' +
+                                            '<div class="txt-local">' + LojasOrder[i].marker.cidade + '</div>' +
+                                            '<div class="txt-endereco">' + LojasOrder[i].marker.endereco + '</div></div></div>' +
+
+                                            '<div class="w-clearfix estaciona-geral">' +
+                                            '<div class="icon-estaciona"><img src="assets/images/icon-estaciona-onde-comprar-new.png"></div>' +
+                                            '<div class="txt-estaciona">Estacionamento Grátis</div></div>' +
+                                            '<div class="w-clearfix horario-funciona-geral">' +
+                                            '<div class="icon-horario"><img src="assets/images/icon-relogio-onde-comprar-new.png"></div>' +
+                                            ' <div class="txt-horario-geral">' +
+                                            '<div class="txt-horario-funciona"><span class="bold-horario">' + LojasOrder[i].marker.horasFun + '</div>' +
+                                            //' <div class="txt-horario-funciona"><span class="bold-horario">Domingo e Feriado</span> das 08h às 14h</div>' +
+                                            '</div>' +
+                                            '</div>' +
+                                            '</div>' +
+                                            '</div>';
+                } else {
+
+
+
+                    lojasTodasOrdenadas = '<div onclick="vaiAteLoja2(' + LojasOrder[i].marker.lat + ',' + LojasOrder[i].marker.lon + ');" class="box-branco-geral">' +
+                                        '<div class="box-branco">' +
+                                        '<div class="w-clearfix loja-geral-endereco">' +
+                                        '<div class="icon-loja-endereco"><img src="assets/images/icon-loja-onde-comprar-new.png"> </div>' +
+
+                                        '<div class="txt-endereco-geral">' +
+                                        '<div class="txt-nome-loja">' + LojasOrder[i].marker.title + '</div>' +
+                                        '<div class="txt-local">' + LojasOrder[i].marker.cidade + '</div>' +
+                                        '<div class="txt-endereco">' + LojasOrder[i].marker.endereco + '</div></div></div>' +
+
+                                        '<div class="w-clearfix estaciona-geral">' +
+                                        '<div class="icon-estaciona"><img src="assets/images/icon-estaciona-onde-comprar-new.png"></div>' +
+                                        '<div class="txt-estaciona"></div></div>' +
+                                        '<div class="w-clearfix horario-funciona-geral">' +
+                                        '<div class="icon-horario"><img src="assets/images/icon-relogio-onde-comprar-new.png"></div>' +
+                                        ' <div class="txt-horario-geral">' +
+                                        '<div class="txt-horario-funciona"><span class="bold-horario">' + LojasOrder[i].marker.horasFun + '</div>' +
+                                        //' <div class="txt-horario-funciona"><span class="bold-horario">Domingo e Feriado</span> das 08h às 14h</div>' +
+                                        '</div>' +
+                                        '</div>' +
+                                        '</div>' +
+                                        '</div>';
+
+
+
+
+                }
+
+                $("#resultados-geral").append(lojasTodasOrdenadas);
+            } console.log(lojasSelecionadas);
+
+            for (var i = 0; i < gmarkers1.length; i++) {
+
+                if (gmarkers1[i].cep != lojasSelecionadas[0] && gmarkers1[i].cep != lojasSelecionadas[1]) {
+
+                    gmarkers1[i].setVisible(false);
+                } else {
+                    gmarkers1[i].setVisible(true);
+                }
+
+            }
+
+
+        }
+
+        else {
+
+            //console.log(status);
+        }
+
+    });
+
+
+
+    //document.getElementById("resultados-geral").innerHTML = lojasBuscadaArray;
+    document.getElementById('field').value = "";
+
+
+
+}
+
+//========================== FIM vai para a cidade ===============================
+//console.log(cidade);
+//console.log(estado);
+//console.log(loja);
+//console.log(beaches[i][0]);
+
+
+
+document.getElementById('lupa-search').addEventListener('click', buscaCep);
+
+document.querySelector('.input-cep').addEventListener('keydown', function (e) {
+    var key = e.which || e.keyCode;
+
+    if (key === 13) { // 13 is enter
+        // code for enter
+        //	console.log($(this).val().length)
+        var xxx = document.getElementById('field').value
+
+        buscaCep()
+
+        //var xxx = document.getElementById('rola').value
+        //console.log(xxx)
+    }
+});
+
+
+var buscaPorCidade = document.getElementById("buscaPorCidade").addEventListener('click', function () {
+    document.getElementById("field-2").innerHTML = "<option>Selecione sua cidade</option>";
+    document.getElementById("field-5").innerHTML = "<option></option>";
+    document.getElementById("field-5").disabled = true;
+    var FitroCidade;
+
+   
+    for (var i = 0; i < lojas1.length; i++) {
+        //debugger;
+        if (lojas1[i].points[0].IdTipoLoja == 1) {
+
+            FitroCidade += ' <option>' + lojas1[i].cidade +'</option>';
+
+        }
+        
+    }
+
+    $("#field-2").append(FitroCidade);
+});
+
+function carregaBairro(cidade) {
+
+    console.log(cidade);
+    document.getElementById("field-5").disabled = false;
+    document.getElementById("field-5").innerHTML = "<option>Selecione seu bairro</option>";
+    var filtroBairro;
+
+
+    function qualquer(valor) {
+        return valor.cidade.trim() == cidade
+    }
+
+    arrayCorrente = lojas1.filter(qualquer);
+    //console.log(arrayCorrente); 
+
+
+    bairros = arrayCorrente[0].points;
+    bairrosUnicos = [];
+
+    for (i = 0; i < bairros.length; i++) {
+
+        if (bairrosUnicos.indexOf(bairros[i].bairro) === -1 && bairros[i].IdTipoLoja === 1) {
+
+            bairrosUnicos.push(bairros[i].bairro);
+
+            filtroBairro += ' <option>' + bairros[i].bairro + '</option>';
+        }
+    }
+
+
+
+    //    for(var i = 0; i < arrayCorrente[0].points.length; i++){
+    //        
+    //        if(arrayCorrente[0].points[i].IdTipoLoja == 1){
+    //        
+    //        filtroBairro += ' <option>'+arrayCorrente[0].points[i].bairro+'</option>';
+    //   }
+    //}       
+    $("#field-5").append(filtroBairro);
+}
+
+function carregaMapa(bairro) {
+
+    $('.hidden').css('height', 'auto');
+    document.body.scrollTop = 1200;
+    document.getElementById("resultados-geral").innerHTML = "";
+    console.log(bairro);
+
+    map.setCenter({
+        lat: parseFloat(arrayCorrente[0].points[0].lat),
+        lng: parseFloat(arrayCorrente[0].points[0].lon)
+    });
+    map.setZoom(11);
+
+    for (var i = 0; i < gmarkers1.length; i++) {
+
+        if (gmarkers1[i].bairro != bairro) {
+
+            gmarkers1[i].setVisible(false);
+
+        } else {
+
+            gmarkers1[i].setVisible(true);
+        }
+
+    }
+
+    var jc = arrayCorrente[0].points;
+    //console.log(jc)
+
+    function CarregaBairroArray(valor) {
+        return valor.bairro.trim() == bairro
+        //console.log(valor.bairro)
+    }
+
+    arrayCorrenteBairro = jc.filter(CarregaBairroArray);
+    console.log(arrayCorrenteBairro);
+
+
+    for (var i = 0; i < arrayCorrenteBairro.length; i++) {
+
+        if (arrayCorrenteBairro[i].IdTipoLoja === 1) {
+
+            var lojaFiltradaBairro = '<div onclick="vaiAteLoja2(' + arrayCorrenteBairro[i].lat + ',' + arrayCorrenteBairro[i].lon + ');" class="box-branco-geral">' +
+                            '<div class="box-branco">' +
+                            '<div class="w-clearfix loja-geral-endereco">' +
+                            '<div class="icon-loja-endereco"><img src="assets/images/icon-loja-onde-comprar-new.png"> </div>' +
+
+                            '<div class="txt-endereco-geral">' +
+                            '<div class="txt-nome-loja">Swift ' + arrayCorrenteBairro[i].title + '</div>' +
+                            '<div class="txt-local">' + arrayCorrenteBairro[i].title + '</div>' +
+                            '<div class="txt-endereco">' + arrayCorrenteBairro[i].endereco +", "+ arrayCorrenteBairro[i].numero +" - Bairro "+ arrayCorrenteBairro[i].bairro + '</div></div></div>' +
+
+                            '<div class="w-clearfix estaciona-geral">' +
+                            '<div class="icon-estaciona"><img src="assets/images/icon-estaciona-onde-comprar-new.png"></div>' +
+                            '<div class="txt-estaciona">Estacionamento Grátis</div></div>' +
+                            '<div class="w-clearfix horario-funciona-geral">' +
+                            '<div class="icon-horario"><img src="assets/images/icon-relogio-onde-comprar-new.png"></div>' +
+                            ' <div class="txt-horario-geral">' +
+                            '<div class="txt-horario-funciona"><span class="bold-horario">' + arrayCorrenteBairro[i].horario + '</div>' +
+                            //' <div class="txt-horario-funciona"><span class="bold-horario">Domingo e Feriado</span> das 08h às 14h</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>';
+
+
+            $("#resultados-geral").append(lojaFiltradaBairro);
+        }
+
+    }
+
+}
+
+</script>
+<script>
+    
+    window.onload = function () {
+
+                    initMap();
+
+                }
+
+</script>
+</body>
+</html>
